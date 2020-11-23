@@ -1,75 +1,90 @@
-﻿using System;
-using System.Net.Http;
+﻿using Nancy.Json;
+using System;
 using System.Collections.Generic;
-using System.Globalization;
-using Windows.UI;
-using Windows.UI.StartScreen;
-using Windows.UI.Xaml.Controls;
-using Windows.UI.Xaml.Media;
+using System.Net.Http;
 
-namespace todoistTile
-{
-	public class Item
-	{
-		public string Id { get; set; }
-		public string Content { get; set; }
-		public Brush Colour { get; set; }
-	}
-
-    public class Library
+namespace todoistTile { 
+    class TodoistConnector
     {
-        private Random _random = new Random((int)DateTime.Now.Ticks);
 
-        private Color FromString(string value)
+        private List<TodoistItem> todaysTasks = new List<TodoistItem>();
+        private String userEmail; 
+        private String userName; 
+        public async void obtainDataFromApi(string token)
         {
-            return Color.FromArgb(
-            Byte.Parse(value.Substring(0, 2), NumberStyles.HexNumber),
-            Byte.Parse(value.Substring(2, 2), NumberStyles.HexNumber),
-            Byte.Parse(value.Substring(4, 2), NumberStyles.HexNumber),
-            Byte.Parse(value.Substring(6, 2), NumberStyles.HexNumber));
-        }
+            // 1000 tasks for one day is enought 
+            var client = new HttpClient();
+            String json = "";
+            String resource_types = "[\"all\"]";
+            DateTime todayDate = DateTime.Today;
 
-        public async void Init(ListBox display)
-        {
-            display.Items.Clear();
-            IReadOnlyList<SecondaryTile> list = await SecondaryTile.FindAllAsync();
-            foreach (SecondaryTile item in list)
-            {
-                display.Items.Add(new Item
-                {
-                    Id = item.TileId,
-                    Content = item.DisplayName,
-                    Colour = new SolidColorBrush(item.VisualElements.BackgroundColor)
+            // Create the HttpContent for the form to be posted.
+            var requestContent = new FormUrlEncodedContent(new[] {
+                    new KeyValuePair<string, string>("token", token),
+                    new KeyValuePair<string, string>("sync_token", "*"),
+                    new KeyValuePair<string, string>("resource_types", resource_types),
                 });
-            }
-        }
 
-        public async void Add(ListBox display, string value, ComboBox colour, object selection)
-        {
-            string id = _random.Next(1, 100000000).ToString();
-            SecondaryTile tile = new SecondaryTile(id, value, id, new Uri("ms-appx:///"), TileSize.Default);
-            Color background = FromString(((ComboBoxItem)colour.SelectedItem).Tag.ToString());
-            tile.VisualElements.BackgroundColor = background;
-            tile.VisualElements.ForegroundText = ForegroundText.Light;
-            tile.VisualElements.ShowNameOnSquare150x150Logo = true;
-            tile.VisualElements.ShowNameOnSquare310x310Logo = true;
-            tile.VisualElements.ShowNameOnWide310x150Logo = true;
-            await tile.RequestCreateAsync();
-            display.Items.Add(new Item { Id = tile.TileId, Content = value, Colour = new SolidColorBrush(background) });
-        }
+            // Get the response.
+            HttpResponseMessage response = await client.PostAsync(
+                "https://api.todoist.com/sync/v8/sync",
+                requestContent);
 
-        public async void Remove(ListBox display)
-        {
-            if (display.SelectedIndex > -1)
+            // Get the response content.
+            HttpContent responseContent = response.Content;
+
+            // Get the stream of the content.
+            using (var reader = new System.IO.StreamReader(await responseContent.ReadAsStreamAsync()))
             {
-                string id = ((Item)display.SelectedItem).Id;
-                if (SecondaryTile.Exists(id))
-                {
-                    SecondaryTile tile = new SecondaryTile(id);
-                    await tile.RequestDeleteAsync();
-                }
-                display.Items.RemoveAt(display.SelectedIndex);
+                // Write the output.
+                json += await reader.ReadToEndAsync();
             }
+
+            dynamic items = getJson(json, "items");
+            dynamic userInfo = getJson(json, "user");
+            this.userEmail = userInfo.email;
+            this.userName = userInfo.full_name; 
+
+            // Make a list of tasks for today
+            foreach (var item in items)
+            {
+                if (item.due != null)
+                {
+                    DateTime itemDate = DateTime.Parse(item.due.date);
+
+                    if (itemDate <= todayDate)
+                    {
+                        String id = Convert.ToString(item.id); 
+                        String content = Convert.ToString(item.content);
+                        DateTime date_added = DateTime.Parse(Convert.ToString(item.date_added)); 
+                        DateTime due_date = DateTime.Parse(Convert.ToString(item.due.date)); 
+
+                        TodoistItem newItem = new TodoistItem(id, content, date_added, due_date); 
+                        this.todaysTasks.Add(newItem);
+                        Console.WriteLine(item.content);
+                    }
+                }
+            }
+        }
+        private dynamic getJson(String json, String itemName)
+        {
+            JavaScriptSerializer serializer = new JavaScriptSerializer();
+            dynamic items = serializer.Deserialize<object>(json);
+            return items[itemName];
+        }
+
+        public List<TodoistItem> getTasks()
+        {
+            return this.todaysTasks; 
+        }
+
+        public String getUserEmail()
+        {
+            return this.userEmail;        
+        }
+        public String getUserName()
+        {
+            return this.userName;
         }
     }
 }

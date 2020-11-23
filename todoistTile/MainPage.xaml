@@ -19,41 +19,10 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0" Margin="20" VerticalAlignment="Center" Name="Value"/>
-                <ComboBox Grid.Column="1" Name="Colour" VerticalAlignment="Center" Margin="20">
-                    <ComboBoxItem Tag="FF000000" IsSelected="True">
-                        <Rectangle Width="25" Height="14" Fill="Black"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FF808080">
-                        <Rectangle Width="25" Height="14" Fill="Gray"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FFFF0000">
-                        <Rectangle Width="25" Height="14" Fill="Red"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FFFFA500">
-                        <Rectangle Width="25" Height="14" Fill="Orange"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FFFFFF00">
-                        <Rectangle Width="25" Height="14" Fill="Yellow"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FF008000">
-                        <Rectangle Width="25" Height="14" Fill="Green"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FF00FFFF">
-                        <Rectangle Width="25" Height="14" Fill="Cyan"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FF0000FF">
-                        <Rectangle Width="25" Height="14" Fill="Blue"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FFFF00FF">
-                        <Rectangle Width="25" Height="14" Fill="Magenta"/>
-                    </ComboBoxItem>
-                    <ComboBoxItem Tag="FF800080">
-                        <Rectangle Width="25" Height="14" Fill="Purple"/>
-                    </ComboBoxItem>
-                </ComboBox>
+                <TextBox Grid.Column="0" Width="Auto"  Margin="20" VerticalAlignment="Center" Name="token" Header="Todoist Token"/>
+                <AppBarButton Grid.Column="1" Icon="Refresh" Margin="20" Width="Auto" VerticalAlignment="Center" Label="Get Tasks"  Click="UpdateList"></AppBarButton>
             </Grid>
-            <ListBox Name="Display" Grid.Row="1">
+            <ListBox Name="Display" Grid.Row="2">
                 <ListBox.ItemTemplate>
                     <DataTemplate>
                         <StackPanel Orientation="Horizontal">

@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using Windows.UI;
+using Windows.UI.Notifications;
 using Windows.UI.StartScreen;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Media;
@@ -13,7 +14,7 @@ public class Item
     public Brush Colour { get; set; }
 }
 
-public class Library
+public class Controller
 {
     private Random _random = new Random((int)DateTime.Now.Ticks);
 
@@ -41,20 +42,6 @@ public class Library
         }
     }
 
-    public async void Add(ListBox display, string value, ComboBox colour, object selection)
-    {
-        string id = _random.Next(1, 100000000).ToString();
-        SecondaryTile tile = new SecondaryTile(id, value, id, new Uri("ms-appx:///"), TileSize.Default);
-        Color background = FromString(((ComboBoxItem)colour.SelectedItem).Tag.ToString());
-        tile.VisualElements.BackgroundColor = background;
-        tile.VisualElements.ForegroundText = ForegroundText.Light;
-        tile.VisualElements.ShowNameOnSquare150x150Logo = true;
-        tile.VisualElements.ShowNameOnSquare310x310Logo = true;
-        tile.VisualElements.ShowNameOnWide310x150Logo = true;
-        await tile.RequestCreateAsync();
-        display.Items.Add(new Item { Id = tile.TileId, Content = value, Colour = new SolidColorBrush(background) });
-    }
-
     public async void Add(ListBox display, TodoistItem item, object selection)
     {
         String id = item.getId();
@@ -68,9 +55,24 @@ public class Library
         tile.VisualElements.ShowNameOnSquare150x150Logo = true;
         tile.VisualElements.ShowNameOnSquare310x310Logo = true;
         tile.VisualElements.ShowNameOnWide310x150Logo = true;
-
+        
         await tile.RequestCreateAsync();
         display.Items.Add(new Item { Id = tile.TileId, Content = value, Colour = new SolidColorBrush(background) });
+    }
+
+    public void Notify( List<TodoistItem> items , String userName, String userEmail)
+    {
+        var template = TileTemplateType.TileWide310x150BlockAndText01;
+        var tileXML = TileUpdateManager.GetTemplateContent(template);
+
+        String title = userName + " " + userEmail; 
+
+        var tileTextAttributes = tileXML.GetElementsByTagName("text");
+        tileTextAttributes[0].AppendChild(tileXML.CreateTextNode(userName));
+        tileTextAttributes[0].AppendChild(tileXML.CreateTextNode(userEmail));
+
+        TileNotification tileNotif = new TileNotification(tileXML);
+        TileUpdateManager.CreateTileUpdaterForApplication().Update(tileNotif); 
     }
 
 

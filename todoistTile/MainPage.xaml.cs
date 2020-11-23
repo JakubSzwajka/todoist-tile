@@ -21,39 +21,45 @@ namespace todoistTile
     /// Pusta strona, która może być używana samodzielnie lub do której można nawigować wewnątrz ramki.
     /// </summary>
     public sealed partial class MainPage : Page
-    {
-        List<TodoistItem> tasks = new List<TodoistItem>();
-
-
+    {   
+        
         public MainPage()
         {
             this.InitializeComponent();
         }
-
-        Library library = new Library();
+        
+        Controller controller = new Controller();
+        TodoistConnector connector = new TodoistConnector(); 
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
-            library.Init(Display);
-            TodoistConnector.obtainTasksFromApi("baaa494629a69edc5e8274e9be151ef34f3ce6ae");
-            tasks = TodoistConnector.getTasks(); 
+            controller.Init(Display);
         }
 
         private void Add_Click(object sender, RoutedEventArgs e)
         {
-            library.Add(Display, Value.Text, Colour, sender);
+            
         }
 
         private void Remove_Click(object sender, RoutedEventArgs e)
         {
-            library.Remove(Display);
+            controller.Remove(Display);
         }
 
         private void UpdateList(object sender, RoutedEventArgs e)
         {
+            List<TodoistItem> tasks = new List<TodoistItem>();
+
+            connector.obtainDataFromApi(token.Text);
+            tasks = connector.getTasks();
+
+            // Send main notification 
+            controller.Notify( tasks, connector.getUserName(), connector.getUserEmail());
+
+            // Add each item
             foreach (var task in tasks)
             {
-                library.Add(Display, task , sender); 
+                //controller.Add(Display, task , sender); 
             }
         }
     }
